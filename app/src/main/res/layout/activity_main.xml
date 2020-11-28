@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/holo_blue_dark"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Monday, 27th April"
+        android:fontFamily="@font/WorkSans_Regular"
+        android:shadowColor="#7F000000"
+        android:shadowRadius="12"
+        android:textColor="@android:color/white"
+        android:shadowDy="8"
+        android:textSize="20sp"
+        android:layout_gravity="center_horizontal" />
+
+</LinearLayout>
