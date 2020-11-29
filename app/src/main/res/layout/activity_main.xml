@@ -1,23 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/sunny_bg"
     android:orientation="vertical"
-    android:background="@android:color/holo_blue_dark"
+    android:padding="16dp"
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/date_textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Monday, 27th April"
-        android:fontFamily="@font/WorkSans_Regular"
+        android:fontFamily="@font/sans_regular"
         android:shadowColor="#7F000000"
+        android:shadowDy="4"
         android:shadowRadius="12"
+        android:text="April 27th"
         android:textColor="@android:color/white"
-        android:shadowDy="8"
-        android:textSize="20sp"
-        android:layout_gravity="center_horizontal" />
+        android:textSize="24sp"
+        app:layout_constraintBottom_toTopOf="@+id/weather_icon_imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/time_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/sans_regular"
+        android:padding="4dp"
+        android:shadowColor="#7F000000"
+        android:shadowDy="4"
+        android:shadowRadius="12"
+        android:text="6:27am"
+        android:textColor="@android:color/white"
+        android:textSize="40sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/date_textView" />
+
+    <TextView
+        android:id="@+id/location_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/sans_regular"
+        android:shadowColor="#7F000000"
+        android:shadowDy="4"
+        android:shadowRadius="12"
+        android:text="Baku"
+        android:textColor="@android:color/white"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_textView" />
+
+    <ImageView
+        android:id="@+id/weather_icon_imageView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/date_textView" />
+
+    <TextView
+        android:id="@+id/tempCelsius_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:fontFamily="@font/sans_regular"
+        android:shadowColor="#7F000000"
+        android:shadowDy="4"
+        android:shadowRadius="12"
+        android:text="100°С"
+        android:textColor="@android:color/white"
+        android:textSize="64sp"
+        app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.55"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weather_icon_imageView" />
+
+    <TextView
+        android:id="@+id/weekDay_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:fontFamily="@font/sans_regular"
+        android:shadowColor="#7F000000"
+        android:shadowDy="4"
+        android:shadowRadius="12"
+        android:text="Monday"
+        android:textColor="@android:color/white"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weather_icon_imageView" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
