@@ -1,12 +1,17 @@
 package com.example.weatherapp;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.example.weatherapp.network.RetrofitClientInstance;
 import com.example.weatherapp.network.WeatherService;
@@ -32,6 +37,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Fullscreen mode
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_main);
 
         // Initialization
@@ -42,11 +52,8 @@ public class MainActivity extends AppCompatActivity {
         weekDay = findViewById(R.id.weekDay_textView);
         weatherIcon = findViewById(R.id.weather_icon_imageView);
 
-        // Weather Setup
-        getCurrentWeather();
-
-        // Time Setup
-        setRepeatingTimeTask();
+        // Set repeating tasks
+        setRepeatingTasks();
 
         //TODO Change BG and Icon
 
@@ -55,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getCurrentWeather() {
         WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
-        Call<CurrentWeather> call = weatherService.getCurrentWeather("Erzurum", API_KEY);
+        Call<CurrentWeather> call = weatherService.getCurrentWeather("Moscow", API_KEY);
 
         call.enqueue(new Callback<CurrentWeather>() {
             @SuppressLint("SetTextI18n")
@@ -63,18 +70,21 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
                 Log.d("myTag", "onResponse: " + response);
 
-                if(response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null) {
                     CurrentWeather currentWeather = response.body();
                     temperature.setText((int) (currentWeather.getMain().getTemp() - 273.15) + "°С");
                     location.setText(currentWeather.getName());
 
+                    // Current weather ID
+                    int weatherId = currentWeather.getWeatherItems().get(0).getId();
                     // Setting icon
                     weatherIcon.setImageResource(
                             CurrentWeatherIconSelector
-                                    .getWeatherIconResId(currentWeather.getWeatherItems().get(0).getId()));
+                                    .getWeatherIconResId(weatherId));
 
                     // Setting background
-
+                    ConstraintLayout layout = findViewById(R.id.main_background);
+                    layout.setBackgroundResource(BackgroundSelector.getBgInt(weatherId));
                 }
             }
 
@@ -85,16 +95,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void setRepeatingTimeTask() {
+    private void setRepeatingTasks() {
         Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
+        TimerTask dateTask = new TimerTask() {
             @Override
             public void run() {
                 runOnUiThread(() -> getCurrentDate());
             }
         };
+        TimerTask weatherTask = new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(() -> getCurrentWeather());
+            }
+        };
 
-        timer.schedule(task, 0L, 500);
+        timer.schedule(dateTask, 0L, 500);
+        timer.schedule(weatherTask, 0L, 1000 * 60 * 60 * 6);
+
+
     }
 
     public void getCurrentDate() {

@@ -2,8 +2,6 @@ package com.example.weatherapp;
 
 import androidx.annotation.DrawableRes;
 
-import com.example.weatherapp.R;
-
 public class CurrentWeatherIconSelector {
 
     @DrawableRes

@@ -33,6 +33,7 @@ public class BackgroundSelector {
             case 522:
             case 531:
             case 781:
+            case 701:
                 return R.drawable.rain_bg;
             case 600:
             case 601:
@@ -55,13 +56,9 @@ public class BackgroundSelector {
             case 761:
             case 762:
             case 711:
-            case 701:
                 return R.drawable.cloud_bg;
-            case 721:
-            case 800:
-                return R.drawable.sunny_bg;
             default:
-                return R.drawable.ic_no_idea;
+                return R.drawable.sunny_bg;
         }
     }
 }
