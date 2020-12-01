@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WeatherApp</string>
+    <string name="april_27th">April 27th</string>
+    <string name="refresh_ui">refresh_UI</string>
 </resources>

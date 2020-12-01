@@ -10,7 +10,8 @@ public interface WeatherService {
 
     @GET("weather")
     Call<CurrentWeather> getCurrentWeather(
-            @Query("q") String q,
+            @Query("lat") double lat,
+            @Query("lon") double lon,
             @Query("appid") String appid);
 
 }

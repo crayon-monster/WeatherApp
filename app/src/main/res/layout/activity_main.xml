@@ -5,7 +5,6 @@
     android:id="@+id/main_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/sunny_bg"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -17,7 +16,6 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="April 27th"
         android:textColor="@android:color/white"
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/weather_icon_imageView"
@@ -37,7 +35,6 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="6:27am"
         android:textColor="@android:color/white"
         android:textSize="40sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -53,7 +50,6 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="Baku"
         android:textColor="@android:color/white"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -79,7 +75,6 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="100°С"
         android:textColor="@android:color/white"
         android:textSize="64sp"
         app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
@@ -97,7 +92,6 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="Monday"
         android:textColor="@android:color/white"
         android:textSize="32sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -106,5 +100,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weather_icon_imageView" />
 
+    <ImageButton
+        android:id="@+id/refresh_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_baseline_refresh"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/refresh_ui"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

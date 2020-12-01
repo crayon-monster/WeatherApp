@@ -1,5 +1,6 @@
 package com.example.weatherapp.network;
 
+import com.example.weatherapp.Constants;
 import com.squareup.moshi.Moshi;
 
 import retrofit2.Retrofit;
