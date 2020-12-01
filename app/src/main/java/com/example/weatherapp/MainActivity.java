@@ -2,6 +2,7 @@ package com.example.weatherapp;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -44,6 +45,10 @@ import static com.example.weatherapp.Constants.API_KEY;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
+    //TODO align refresh button in a correct way
+    //TODO Prefernce -> background
+    //TODO Refresh Animation
+
     TextView date, time, location, temperature, weekDay;
     ImageView weatherIcon;
     ImageButton refreshButton;
@@ -51,6 +56,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     // Location variables
     Double pLong = 0.0;
     Double pLat = 0.0;
+
+    //Preferences
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         // Fullscreen mode
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         setContentView(R.layout.activity_main);
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
@@ -82,9 +90,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
 
-        // Set repeating tasks
+        // Prefernces
+        sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getCurrentWeather();
         setRepeatingTasks();
     }
+
     private void setClickListener() {
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            return;
         }
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria crta = new Criteria();
@@ -116,7 +133,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         crta.setCostAllowed(true);
         crta.setPowerRequirement(Criteria.POWER_LOW);
         String provider = locationManager.getBestProvider(crta, true);
-        Log.d("","provider : "+provider);
         // String provider = LocationManager.GPS_PROVIDER;
         MyLocationListener locationListener = new MyLocationListener();
         locationManager.requestLocationUpdates(provider, 1000, 0, locationListener);
@@ -137,29 +153,52 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
                 Log.d("myTag", "onResponse: " + response);
 
+                int currentTemp;
+                int conditionID;
+                String locationCity;
+
                 if (response.isSuccessful() && response.body() != null) {
                     CurrentWeather currentWeather = response.body();
-                    temperature.setText(MessageFormat.format("{0}°С", (int) (currentWeather.getMain().getTemp() - 273.15)));
-                    location.setText(currentWeather.getName());
 
-                    // Current weather ID
-                    int weatherId = currentWeather.getWeatherItems().get(0).getId();
+                    currentTemp = (int) (currentWeather.getMain().getTemp() - 273.15);
+                    conditionID = currentWeather.getWeatherItems().get(0).getId();
+                    locationCity = currentWeather.getName();
+
+                    temperature.setText(MessageFormat.format("{0}°С", currentTemp));
+                    location.setText(locationCity);
+
                     // Setting icon
                     weatherIcon.setImageResource(
                             CurrentWeatherIconSelector
-                                    .getWeatherIconResId(weatherId));
+                                    .getWeatherIconResId(conditionID));
 
                     // Setting background
                     ConstraintLayout layout = findViewById(R.id.main_background);
-                    layout.setBackgroundResource(BackgroundSelector.getBgInt(weatherId));
+                    layout.setBackgroundResource(BackgroundSelector.getBgInt(conditionID));
+
+                    saveToPreferences(currentTemp, conditionID, locationCity);
                 }
+
             }
 
             @Override
             public void onFailure(@NonNull Call<CurrentWeather> call, @NonNull Throwable t) {
                 Log.d("myTag", "onResponse: " + t);
+                location.setText(sharedPreferences.getString("Location", "Not Found"));
+                temperature.setText(String.valueOf(sharedPreferences.getInt("Temps", 404)) + "°С");
+                Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void saveToPreferences(int temp, int id, String location) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putInt("Temps", temp);
+        editor.putInt("ConditionID", id);
+        editor.putString("Location", location);
+
+        editor.apply();
     }
 
     private void setRepeatingTasks() {
@@ -170,16 +209,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 runOnUiThread(() -> getCurrentDate());
             }
         };
-        TimerTask weatherTask = new TimerTask() {
-            @Override
-            public void run() {
-                getCurrentWeather();
-            }
-        };
 
         timer.schedule(dateTask, 0L, 500);
-        timer.schedule(weatherTask, 0L, 1000 * 60 * 60 * 6);
-
 
     }
 
@@ -198,7 +229,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         time.setText(hourMinute);
         weekDay.setText(dayWeek);
 
-        Log.d("myTag", "Time set");
     }
 
     @Override

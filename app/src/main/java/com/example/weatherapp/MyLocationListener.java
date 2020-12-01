@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class MyLocationListener extends Service implements LocationListener {
+
     @Override
     public void onLocationChanged(@NonNull Location location) {
 
