@@ -3,11 +3,8 @@ package com.example.weatherapp;
 import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -26,9 +23,6 @@ import androidx.core.app.ActivityCompat;
 import com.example.weatherapp.network.RetrofitClientInstance;
 import com.example.weatherapp.network.WeatherService;
 import com.example.weatherapp.pojo.CurrentWeather;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -45,13 +39,11 @@ import static com.example.weatherapp.Constants.API_KEY;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    //TODO align refresh button in a correct way
-    //TODO Prefernce -> background
     //TODO Refresh Animation
-
-    TextView date, time, location, temperature, weekDay;
-    ImageView weatherIcon;
-    ImageButton refreshButton;
+    private GpsTracker gpsTracker;
+    private TextView date, time, location, temperature, weekDay;
+    private ImageView weatherIcon;
+    private ImageButton refreshButton;
 
     // Location variables
     Double pLong = 0.0;
@@ -86,61 +78,37 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         setClickListener();
 
         // Get location
-        getLocation();
+        getLocation(findViewById(android.R.id.content).getRootView());
+
+        getCurrentWeather();
+        setRepeatingTasks();
 
         Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
 
-        // Prefernces
+        // Preferences
         sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        getCurrentWeather();
-        setRepeatingTasks();
+    public void getLocation(View view) {
+        gpsTracker = new GpsTracker(MainActivity.this);
+        if (gpsTracker.canGetLocation()) {
+            double latitude = gpsTracker.getLatitude();
+            double longitude = gpsTracker.getLongitude();
+            pLat = latitude;
+            pLong = longitude;
+        } else {
+            gpsTracker.showSettingsAlert();
+        }
     }
 
     private void setClickListener() {
         refreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getLocation();
+                getLocation(v);
                 getCurrentWeather();
-                Toast.makeText(getApplicationContext(), "Weather updated", Toast.LENGTH_SHORT).show();
-                Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
             }
         });
-    }
-
-    private void getLocation() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria crta = new Criteria();
-        crta.setAccuracy(Criteria.ACCURACY_FINE);
-        crta.setAltitudeRequired(true);
-        crta.setBearingRequired(true);
-        crta.setCostAllowed(true);
-        crta.setPowerRequirement(Criteria.POWER_LOW);
-        String provider = locationManager.getBestProvider(crta, true);
-        // String provider = LocationManager.GPS_PROVIDER;
-        MyLocationListener locationListener = new MyLocationListener();
-        locationManager.requestLocationUpdates(provider, 1000, 0, locationListener);
-        Location location = locationManager.getLastKnownLocation(provider);
-
-        pLat = location.getLatitude();
-        pLong = location.getLongitude();
-
     }
 
     private void getCurrentWeather() {
@@ -149,13 +117,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         call.enqueue(new Callback<CurrentWeather>() {
 
+            int currentTemp;
+            int conditionID;
+            int imageId;
+            int backgroundId;
+            String locationCity;
+            ConstraintLayout layout;
+
             @Override
             public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
                 Log.d("myTag", "onResponse: " + response);
-
-                int currentTemp;
-                int conditionID;
-                String locationCity;
 
                 if (response.isSuccessful() && response.body() != null) {
                     CurrentWeather currentWeather = response.body();
@@ -163,20 +134,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     currentTemp = (int) (currentWeather.getMain().getTemp() - 273.15);
                     conditionID = currentWeather.getWeatherItems().get(0).getId();
                     locationCity = currentWeather.getName();
+                    imageId = CurrentWeatherIconSelector.getWeatherIconResId(conditionID);
+                    backgroundId = BackgroundSelector.getBgInt(conditionID);
+
 
                     temperature.setText(MessageFormat.format("{0}°С", currentTemp));
                     location.setText(locationCity);
-
-                    // Setting icon
-                    weatherIcon.setImageResource(
-                            CurrentWeatherIconSelector
-                                    .getWeatherIconResId(conditionID));
+                    weatherIcon.setImageResource(imageId);
 
                     // Setting background
-                    ConstraintLayout layout = findViewById(R.id.main_background);
-                    layout.setBackgroundResource(BackgroundSelector.getBgInt(conditionID));
+                    layout = findViewById(R.id.main_background);
+                    layout.setBackgroundResource(backgroundId);
 
                     saveToPreferences(currentTemp, conditionID, locationCity);
+
+                    if (pLat != 0.0 && pLong != 0.0) {
+                        Toast.makeText(getApplicationContext(), "Weather updated!", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
             }
@@ -184,9 +158,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             @Override
             public void onFailure(@NonNull Call<CurrentWeather> call, @NonNull Throwable t) {
                 Log.d("myTag", "onResponse: " + t);
+
                 location.setText(sharedPreferences.getString("Location", "Not Found"));
-                temperature.setText(String.valueOf(sharedPreferences.getInt("Temps", 404)) + "°С");
-                Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+                temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
+                layout = findViewById(R.id.main_background);
+                imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
+                backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
+
+                layout.setBackgroundResource(backgroundId);
+                weatherIcon.setImageResource(imageId);
+
+                Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
             }
         });
     }
