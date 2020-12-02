@@ -8,7 +8,7 @@
     android:background="@drawable/no_weather"
     android:orientation="vertical"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="40dp"
+    android:paddingVertical="48dp"
     tools:context=".MainActivity">
 
     <TextView
@@ -69,7 +69,7 @@
         android:src="@drawable/ic_no_idea"
         app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.4"
+        app:layout_constraintHeight_percent="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/date_textView" />
 
@@ -111,12 +111,15 @@
 
     <ImageButton
         android:id="@+id/refresh_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="@drawable/ic_baseline_refresh"
         android:contentDescription="@string/refresh_ui"
         app:layout_constraintBottom_toBottomOf="@id/date_textView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/date_textView" />
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toEndOf="@+id/date_textView"
+        app:layout_constraintTop_toTopOf="@id/date_textView"
+        app:layout_constraintWidth_percent="0.1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
