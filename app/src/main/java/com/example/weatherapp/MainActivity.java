@@ -40,7 +40,7 @@ import static com.example.weatherapp.Constants.API_KEY;
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
     //TODO Refresh Animation
-    private GpsTracker gpsTracker;
+    private GPSTrack gpsTrack;
     private TextView date, time, location, temperature, weekDay;
     private ImageView weatherIcon;
     private ImageButton refreshButton;
@@ -77,100 +77,85 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         // Set listener
         setClickListener();
 
-        // Get location
-        getLocation(findViewById(android.R.id.content).getRootView());
-
         setRepeatingTasks();
 
-        Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
 
         // Preferences
         sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
+
+        location.setText(sharedPreferences.getString("Location", "Not Found"));
+        temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
+        View layout = findViewById(R.id.main_background);
+        int imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
+        int backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
+
+        layout.setBackgroundResource(backgroundId);
+        weatherIcon.setImageResource(imageId);
     }
 
-    public void getLocation(View view) {
-        gpsTracker = new GpsTracker(MainActivity.this);
-        if (gpsTracker.canGetLocation()) {
-            double latitude = gpsTracker.getLatitude();
-            double longitude = gpsTracker.getLongitude();
-            pLat = latitude;
-            pLong = longitude;
-            getCurrentWeather();
-        } else {
-            gpsTracker.showSettingsAlert();
-        }
+    public void getLocation() {
+        gpsTrack = new GPSTrack(MainActivity.this);
+        if (gpsTrack.canGetLocation()) {
+            pLat = gpsTrack.getLatitude();
+            pLong = gpsTrack.getLongitude();
+            Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
+            if (pLong != 0.0 && pLat != 0.0) getCurrentWeather();
+        } else gpsTrack.showSettingsAlert();
     }
 
     private void setClickListener() {
-        refreshButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getLocation(v);
-                getCurrentWeather();
-            }
-        });
+        refreshButton.setOnClickListener(v -> getLocation());
     }
 
     private void getCurrentWeather() {
-        if (pLat != 0.0 && pLong != 0.0) {
-            WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
-            Call<CurrentWeather> call = weatherService.getCurrentWeather(pLat, pLong, API_KEY);
+        WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
+        Call<CurrentWeather> call = weatherService.getCurrentWeather(pLat, pLong, API_KEY);
 
-            call.enqueue(new Callback<CurrentWeather>() {
+        call.enqueue(new Callback<CurrentWeather>() {
 
-                int currentTemp;
-                int conditionID;
-                int imageId;
-                int backgroundId;
-                String locationCity;
-                ConstraintLayout layout;
+            int currentTemp;
+            int conditionID;
+            int imageId;
+            int backgroundId;
+            String locationCity;
+            ConstraintLayout layout;
 
-                @Override
-                public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
+            @Override
+            public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
 
-                    Log.d("myTag", "onResponse: " + response);
+                Log.d("myTag", "onResponse: " + response);
 
-                    if (response.isSuccessful() && response.body() != null) {
-                        CurrentWeather currentWeather = response.body();
+                if (response.isSuccessful() && response.body() != null) {
+                    CurrentWeather currentWeather = response.body();
 
-                        currentTemp = (int) (currentWeather.getMain().getTemp() - 273.15);
-                        conditionID = currentWeather.getWeatherItems().get(0).getId();
-                        locationCity = currentWeather.getName();
-                        imageId = CurrentWeatherIconSelector.getWeatherIconResId(conditionID);
-                        backgroundId = BackgroundSelector.getBgInt(conditionID);
-
-
-                        temperature.setText(MessageFormat.format("{0}°С", currentTemp));
-                        location.setText(locationCity);
-                        weatherIcon.setImageResource(imageId);
-
-                        // Setting background
-                        layout = findViewById(R.id.main_background);
-                        layout.setBackgroundResource(backgroundId);
+                    currentTemp = (int) (currentWeather.getMain().getTemp() - 273.15);
+                    conditionID = currentWeather.getWeatherItems().get(0).getId();
+                    locationCity = currentWeather.getName();
+                    imageId = CurrentWeatherIconSelector.getWeatherIconResId(conditionID);
+                    backgroundId = BackgroundSelector.getBgInt(conditionID);
 
 
-                        saveToPreferences(currentTemp, conditionID, locationCity);
-                        Toast.makeText(getApplicationContext(), "Weather updated!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<CurrentWeather> call, @NonNull Throwable t) {
-                    Log.d("myTag", "onResponse: " + t);
-
-                    location.setText(sharedPreferences.getString("Location", "Not Found"));
-                    temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
-                    layout = findViewById(R.id.main_background);
-                    imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
-                    backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
-
-                    layout.setBackgroundResource(backgroundId);
+                    temperature.setText(MessageFormat.format("{0}°С", currentTemp));
+                    location.setText(locationCity);
                     weatherIcon.setImageResource(imageId);
 
-                    Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
+                    // Setting background
+                    layout = findViewById(R.id.main_background);
+                    layout.setBackgroundResource(backgroundId);
+
+
+                    saveToPreferences(currentTemp, conditionID, locationCity);
+                    Toast.makeText(MainActivity.this, "Weather updated!", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CurrentWeather> call, @NonNull Throwable t) {
+                Log.d("myTag", "onResponse: " + t);
+
+                Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void saveToPreferences(int temp, int id, String location) {

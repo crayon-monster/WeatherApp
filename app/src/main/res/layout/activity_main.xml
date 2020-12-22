@@ -82,7 +82,7 @@
         android:shadowColor="#7F000000"
         android:shadowDy="4"
         android:shadowRadius="12"
-        android:text="0"
+        android:text="404°С"
         android:textColor="@android:color/white"
         android:textSize="64sp"
         app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
