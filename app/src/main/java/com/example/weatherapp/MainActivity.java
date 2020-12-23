@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -23,6 +24,7 @@ import androidx.core.app.ActivityCompat;
 import com.example.weatherapp.network.RetrofitClientInstance;
 import com.example.weatherapp.network.WeatherService;
 import com.example.weatherapp.pojo.CurrentWeather;
+import com.tuyenmonkey.mkloader.MKLoader;
 
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -44,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private TextView date, time, location, temperature, weekDay;
     private ImageView weatherIcon;
     private ImageButton refreshButton;
+    private MKLoader mkLoader;
 
     // Location variables
     Double pLong;
@@ -55,8 +58,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        setTheme(R.style.Theme_WeatherApp);
 
         // Fullscreen mode
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -73,12 +74,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         weekDay = findViewById(R.id.weekDay_textView);
         weatherIcon = findViewById(R.id.weather_icon_imageView);
         refreshButton = findViewById(R.id.refresh_button);
+        mkLoader = findViewById(R.id.mkLoader);
 
         // Set listener
         setClickListener();
 
         setRepeatingTasks();
-
 
         // Preferences
         sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
@@ -100,11 +101,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             pLong = gpsTrack.getLongitude();
             Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
             if (pLong != 0.0 && pLat != 0.0) getCurrentWeather();
-        } else gpsTrack.showSettingsAlert();
+        }
+        else {
+            gpsTrack.showSettingsAlert();
+            stopAnimation();
+        }
     }
 
     private void setClickListener() {
-        refreshButton.setOnClickListener(v -> getLocation());
+        refreshButton.setOnClickListener(v -> {
+            refreshButton.setVisibility(View.INVISIBLE);
+            mkLoader.setVisibility(View.VISIBLE);
+            Log.d("MYBUTTON", "Button appeared");
+
+            getLocation();
+        });
+    }
+
+    private void stopAnimation() {
+        mkLoader.setVisibility(View.INVISIBLE);
+        refreshButton.setVisibility(View.VISIBLE);
+        Log.d("MYBUTTON", "Button disappeared");
     }
 
     private void getCurrentWeather() {
@@ -146,6 +163,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
                     saveToPreferences(currentTemp, conditionID, locationCity);
                     Toast.makeText(MainActivity.this, "Weather updated!", Toast.LENGTH_SHORT).show();
+
+                    stopAnimation();
                 }
             }
 
@@ -154,6 +173,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 Log.d("myTag", "onResponse: " + t);
 
                 Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
+
+                stopAnimation();
             }
         });
     }

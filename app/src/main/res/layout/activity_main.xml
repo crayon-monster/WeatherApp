@@ -86,9 +86,9 @@
         android:textColor="@android:color/white"
         android:textSize="64sp"
         app:layout_constraintBottom_toTopOf="@+id/weekDay_textView"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/weekDay_textView"
         app:layout_constraintHorizontal_bias="0.55"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/weekDay_textView"
         app:layout_constraintTop_toBottomOf="@+id/weather_icon_imageView" />
 
     <TextView
@@ -109,17 +109,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weather_icon_imageView" />
 
+    <com.tuyenmonkey.mkloader.MKLoader
+        android:id="@+id/mkLoader"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        app:layout_constraintBottom_toBottomOf="@+id/refresh_button"
+        app:layout_constraintEnd_toEndOf="@+id/refresh_button"
+        app:layout_constraintStart_toStartOf="@+id/refresh_button"
+        app:layout_constraintTop_toTopOf="@+id/refresh_button"
+        android:visibility="invisible"
+        app:mk_color="@color/white"
+        app:mk_type="FishSpinner" />
+
     <ImageButton
         android:id="@+id/refresh_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/ic_baseline_refresh"
         android:contentDescription="@string/refresh_ui"
-        app:layout_constraintBottom_toBottomOf="@id/date_textView"
+        app:layout_constraintBottom_toBottomOf="@+id/date_textView"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1"
+        android:visibility="visible"
+        app:layout_constraintHorizontal_bias="0.858"
         app:layout_constraintStart_toEndOf="@+id/date_textView"
         app:layout_constraintTop_toTopOf="@id/date_textView"
+        app:layout_constraintVertical_bias="0.2"
         app:layout_constraintWidth_percent="0.1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
