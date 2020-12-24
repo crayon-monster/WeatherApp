@@ -1,6 +1,9 @@
 package com.example.weatherapp;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -46,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private ImageView weatherIcon;
     private ImageButton refreshButton, gpsButton;
     private MKLoader mkLoader;
+    View backgroundView;
 
     // Location variables
     Double pLong;
@@ -75,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         refreshButton = findViewById(R.id.refresh_button);
         gpsButton = findViewById(R.id.gpsButton);
         mkLoader = findViewById(R.id.mkLoader);
+        backgroundView = findViewById(R.id.main_background);
+        backgroundView.setTag(R.drawable.no_weather);
 
         // Set listener
         setClickListener();
@@ -89,10 +95,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         location.setText(sharedPreferences.getString("Location", "Not Found"));
         temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
-        View layout = findViewById(R.id.main_background);
         int imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
         int backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
-        layout.setBackgroundResource(backgroundId);
+        backgroundView.setBackgroundResource(backgroundId);
         weatherIcon.setImageResource(imageId);
     }
 
@@ -140,7 +145,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             int imageId;
             int backgroundId;
             String locationCity;
-            ConstraintLayout layout;
 
             @Override
             public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
@@ -156,15 +160,32 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     imageId = CurrentWeatherIconSelector.getWeatherIconResId(conditionID);
                     backgroundId = BackgroundSelector.getBgInt(conditionID);
 
-
-                    temperature.setText(MessageFormat.format("{0}°С", currentTemp));
-                    location.setText(locationCity);
-                    weatherIcon.setImageResource(imageId);
-
                     // Setting background
-                    layout = findViewById(R.id.main_background);
-                    layout.setBackgroundResource(backgroundId);
+                    ObjectAnimator bgAnimator = ObjectAnimator.ofFloat(backgroundView, View.ALPHA, 1.0f, 0.0f);
+                    ObjectAnimator fadeInAnim = ObjectAnimator.ofFloat(backgroundView, View.ALPHA, 0.0f, 1.0f);
 
+                    bgAnimator.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(final Animator animation) {
+                            Log.d("layoutAlpha", "onAnimationStart: 1 -> 0");
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            backgroundView.setBackgroundResource(backgroundId);
+                            backgroundView.setTag(backgroundId);
+                            temperature.setText(MessageFormat.format("{0}°С", currentTemp));
+                            location.setText(locationCity);
+                            weatherIcon.setImageResource(imageId);
+
+                            Log.d("layoutAlpha", "onAnimationStart: 0 -> 1");
+                            fadeInAnim.start();
+                        }
+                    });
+                    bgAnimator.setDuration(250);
+                    fadeInAnim.setDuration(250);
+
+                    bgAnimator.start();
 
                     saveToPreferences(currentTemp, conditionID, locationCity, pLong, pLat);
                     Toast.makeText(MainActivity.this, "Weather updated!", Toast.LENGTH_SHORT).show();
