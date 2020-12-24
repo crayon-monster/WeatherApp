@@ -6,8 +6,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,7 +18,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
 import com.example.weatherapp.network.RetrofitClientInstance;
@@ -41,7 +38,7 @@ import retrofit2.Response;
 
 import static com.example.weatherapp.Constants.API_KEY;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
+public class MainActivity extends AppCompatActivity {
 
     //TODO Refresh Animation
     private GPSTrack gpsTrack;
@@ -247,10 +244,4 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     }
 
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        pLat = location.getLatitude();
-        pLong = location.getLongitude();
-        Log.d("alo", pLat + " " + pLong);
-    }
 }
