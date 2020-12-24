@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -45,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private GPSTrack gpsTrack;
     private TextView date, time, location, temperature, weekDay;
     private ImageView weatherIcon;
-    private ImageButton refreshButton;
+    private ImageButton refreshButton, gpsButton;
     private MKLoader mkLoader;
 
     // Location variables
@@ -74,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         weekDay = findViewById(R.id.weekDay_textView);
         weatherIcon = findViewById(R.id.weather_icon_imageView);
         refreshButton = findViewById(R.id.refresh_button);
+        gpsButton = findViewById(R.id.gpsButton);
         mkLoader = findViewById(R.id.mkLoader);
 
         // Set listener
@@ -84,12 +84,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         // Preferences
         sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
 
+        pLong = Double.parseDouble(sharedPreferences.getString("Longitude", "0.0"));
+        pLat = Double.parseDouble(sharedPreferences.getString("Latitude", "0.0"));
+
         location.setText(sharedPreferences.getString("Location", "Not Found"));
         temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
         View layout = findViewById(R.id.main_background);
         int imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
         int backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
-
         layout.setBackgroundResource(backgroundId);
         weatherIcon.setImageResource(imageId);
     }
@@ -100,11 +102,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             pLat = gpsTrack.getLatitude();
             pLong = gpsTrack.getLongitude();
             Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
-            if (pLong != 0.0 && pLat != 0.0) getCurrentWeather();
-        }
-        else {
-            gpsTrack.showSettingsAlert();
-            stopAnimation();
+            Toast.makeText(this, "Location updated", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Please enable GPS to get your current location", Toast.LENGTH_SHORT).show();
+            stopLoadingAnimation();
         }
     }
 
@@ -113,12 +114,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             refreshButton.setVisibility(View.INVISIBLE);
             mkLoader.setVisibility(View.VISIBLE);
             Log.d("MYBUTTON", "Button appeared");
-
-            getLocation();
+            if (pLong != 0.0 || pLat != 0.0) getCurrentWeather();
+            else {
+                Toast.makeText(this, "First press the GPS button to get the location", Toast.LENGTH_SHORT).show();
+                stopLoadingAnimation();
+            }
         });
+        gpsButton.setOnClickListener(v -> getLocation());
     }
 
-    private void stopAnimation() {
+    private void stopLoadingAnimation() {
         mkLoader.setVisibility(View.INVISIBLE);
         refreshButton.setVisibility(View.VISIBLE);
         Log.d("MYBUTTON", "Button disappeared");
@@ -161,10 +166,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     layout.setBackgroundResource(backgroundId);
 
 
-                    saveToPreferences(currentTemp, conditionID, locationCity);
+                    saveToPreferences(currentTemp, conditionID, locationCity, pLong, pLat);
                     Toast.makeText(MainActivity.this, "Weather updated!", Toast.LENGTH_SHORT).show();
 
-                    stopAnimation();
+                    stopLoadingAnimation();
                 }
             }
 
@@ -174,17 +179,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
                 Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
 
-                stopAnimation();
+                stopLoadingAnimation();
             }
         });
     }
 
-    private void saveToPreferences(int temp, int id, String location) {
+    private void saveToPreferences(int temp, int id, String location, Double pLong, Double pLat) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         editor.putInt("Temps", temp);
         editor.putInt("ConditionID", id);
         editor.putString("Location", location);
+        editor.putString("Longitude", pLong.toString());
+        editor.putString("Latitude", pLat.toString());
 
         editor.apply();
     }
