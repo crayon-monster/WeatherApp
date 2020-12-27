@@ -2,18 +2,14 @@ package com.example.weatherapp;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Service;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -25,9 +21,6 @@ public class GPSTrack extends Service implements LocationListener {
 
     // flag for GPS status
     boolean isGPSEnabled = false;
-
-    // flag for network status
-    private boolean isNetworkEnabled = false;
 
     // flag for location status
     private boolean canGetLocation = false;
@@ -51,7 +44,8 @@ public class GPSTrack extends Service implements LocationListener {
 
             isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-            isNetworkEnabled = locationManager
+            // flag for network status
+            boolean isNetworkEnabled = locationManager
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (isGPSEnabled || isNetworkEnabled) {
@@ -64,7 +58,7 @@ public class GPSTrack extends Service implements LocationListener {
                     }
                     locationManager.requestLocationUpdates(
                             LocationManager.NETWORK_PROVIDER,
-                            1000 * 60 * 1, 10, this);
+                            1000 * 60, 10, this);
 
                     Log.d("Network", "Network");
                     if (locationManager != null) {
@@ -87,7 +81,7 @@ public class GPSTrack extends Service implements LocationListener {
                         }
                         locationManager.requestLocationUpdates(
                                 LocationManager.GPS_PROVIDER,
-                                1000 * 60 * 1, 10, this);
+                                1000 * 60, 10, this);
 
                         Log.d("GPS Enabled", "GPS Enabled");
                         if (locationManager != null) {
@@ -115,19 +109,14 @@ public class GPSTrack extends Service implements LocationListener {
     }
 
     public double getLatitude() {
-        if (location != null) {
-            latitude = location.getLatitude();
-        }
-        return latitude;
+        return this.latitude;
     }
 
     public double getLongitude() {
-        if (location != null) {
-            longitude = location.getLongitude();
-        }
-        return longitude;
+        return this.longitude;
     }
 
+/*
     public void showSettingsAlert() {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(mContext);
 
@@ -150,14 +139,10 @@ public class GPSTrack extends Service implements LocationListener {
         });
         alertDialog.show();
     }
+*/
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
 

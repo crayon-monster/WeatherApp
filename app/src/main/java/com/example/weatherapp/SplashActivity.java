@@ -3,6 +3,7 @@ package com.example.weatherapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -18,8 +19,7 @@ public class SplashActivity extends AppCompatActivity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         setContentView(R.layout.activity_splash);
 
-        Handler handler = new Handler();
-        handler.postDelayed((Runnable) this::toMainActivity, 1500);
+        new Handler(Looper.getMainLooper()).postDelayed(this::toMainActivity, 1000);
     }
 
     void toMainActivity() {

@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -40,8 +41,6 @@ import static com.example.weatherapp.Constants.API_KEY;
 
 public class MainActivity extends AppCompatActivity {
 
-    //TODO Refresh Animation
-    private GPSTrack gpsTrack;
     private TextView date, time, location, temperature, weekDay;
     private ImageView weatherIcon;
     private ImageButton refreshButton, gpsButton;
@@ -55,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     //Preferences
     SharedPreferences sharedPreferences;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getLocation() {
-        gpsTrack = new GPSTrack(MainActivity.this);
+        GPSTrack gpsTrack = new GPSTrack(MainActivity.this);
         if (gpsTrack.canGetLocation()) {
             pLat = gpsTrack.getLatitude();
             pLong = gpsTrack.getLongitude();
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         refreshButton.setOnClickListener(v -> {
             refreshButton.setVisibility(View.INVISIBLE);
             mkLoader.setVisibility(View.VISIBLE);
-            Log.d("MYBUTTON", "Button appeared");
+            Log.d("MyButton", "Button appeared");
             if (pLong != 0.0 || pLat != 0.0) getCurrentWeather();
             else {
                 Toast.makeText(this, "First press the GPS button to get the location", Toast.LENGTH_SHORT).show();
@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopLoadingAnimation() {
         mkLoader.setVisibility(View.INVISIBLE);
         refreshButton.setVisibility(View.VISIBLE);
-        Log.d("MYBUTTON", "Button disappeared");
+        Log.d("MyButton", "Button disappeared");
     }
 
     private void getCurrentWeather() {
@@ -227,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("SimpleDateFormat")
     public void getCurrentDate() {
         SimpleDateFormat mmmm_dd = new SimpleDateFormat("MMMM dd");
         SimpleDateFormat hh_mm = new SimpleDateFormat("K:mma");
