@@ -1,12 +1,13 @@
 package com.example.weatherapp;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -18,7 +19,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
 import com.example.weatherapp.network.RetrofitClientInstance;
@@ -39,14 +39,13 @@ import retrofit2.Response;
 
 import static com.example.weatherapp.Constants.API_KEY;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
+public class MainActivity extends AppCompatActivity {
 
-    //TODO Refresh Animation
-    private GPSTrack gpsTrack;
     private TextView date, time, location, temperature, weekDay;
     private ImageView weatherIcon;
-    private ImageButton refreshButton;
+    private ImageButton refreshButton, gpsButton;
     private MKLoader mkLoader;
+    View backgroundView;
 
     // Location variables
     Double pLong;
@@ -55,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     //Preferences
     SharedPreferences sharedPreferences;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,7 +74,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         weekDay = findViewById(R.id.weekDay_textView);
         weatherIcon = findViewById(R.id.weather_icon_imageView);
         refreshButton = findViewById(R.id.refresh_button);
+        gpsButton = findViewById(R.id.gpsButton);
         mkLoader = findViewById(R.id.mkLoader);
+        backgroundView = findViewById(R.id.main_background);
+        backgroundView.setTag(R.drawable.no_weather);
 
         // Set listener
         setClickListener();
@@ -84,27 +87,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         // Preferences
         sharedPreferences = getSharedPreferences("weatherData", Context.MODE_PRIVATE);
 
+        pLong = Double.parseDouble(sharedPreferences.getString("Longitude", "0.0"));
+        pLat = Double.parseDouble(sharedPreferences.getString("Latitude", "0.0"));
+
         location.setText(sharedPreferences.getString("Location", "Not Found"));
         temperature.setText(sharedPreferences.getInt("Temps", 404) + "°С");
-        View layout = findViewById(R.id.main_background);
         int imageId = CurrentWeatherIconSelector.getWeatherIconResId(sharedPreferences.getInt("ConditionID", R.drawable.ic_no_idea));
         int backgroundId = BackgroundSelector.getBgInt(sharedPreferences.getInt("ConditionID", R.drawable.no_weather));
-
-        layout.setBackgroundResource(backgroundId);
+        backgroundView.setBackgroundResource(backgroundId);
         weatherIcon.setImageResource(imageId);
     }
 
     public void getLocation() {
-        gpsTrack = new GPSTrack(MainActivity.this);
+        GPSTrack gpsTrack = new GPSTrack(MainActivity.this);
         if (gpsTrack.canGetLocation()) {
             pLat = gpsTrack.getLatitude();
             pLong = gpsTrack.getLongitude();
             Log.d("myLocation", "\nlon: " + pLong + "\nlat: " + pLat);
-            if (pLong != 0.0 && pLat != 0.0) getCurrentWeather();
-        }
-        else {
-            gpsTrack.showSettingsAlert();
-            stopAnimation();
+            Toast.makeText(this, "Location updated", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Please enable GPS to get your current location", Toast.LENGTH_SHORT).show();
+            stopLoadingAnimation();
         }
     }
 
@@ -112,16 +115,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         refreshButton.setOnClickListener(v -> {
             refreshButton.setVisibility(View.INVISIBLE);
             mkLoader.setVisibility(View.VISIBLE);
-            Log.d("MYBUTTON", "Button appeared");
-
-            getLocation();
+            Log.d("MyButton", "Button appeared");
+            if (pLong != 0.0 || pLat != 0.0) getCurrentWeather();
+            else {
+                Toast.makeText(this, "First press the GPS button to get the location", Toast.LENGTH_SHORT).show();
+                stopLoadingAnimation();
+            }
         });
+        gpsButton.setOnClickListener(v -> getLocation());
     }
 
-    private void stopAnimation() {
+    private void stopLoadingAnimation() {
         mkLoader.setVisibility(View.INVISIBLE);
         refreshButton.setVisibility(View.VISIBLE);
-        Log.d("MYBUTTON", "Button disappeared");
+        Log.d("MyButton", "Button disappeared");
     }
 
     private void getCurrentWeather() {
@@ -135,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             int imageId;
             int backgroundId;
             String locationCity;
-            ConstraintLayout layout;
 
             @Override
             public void onResponse(@NonNull Call<CurrentWeather> call, @NonNull Response<CurrentWeather> response) {
@@ -151,20 +157,37 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     imageId = CurrentWeatherIconSelector.getWeatherIconResId(conditionID);
                     backgroundId = BackgroundSelector.getBgInt(conditionID);
 
-
-                    temperature.setText(MessageFormat.format("{0}°С", currentTemp));
-                    location.setText(locationCity);
-                    weatherIcon.setImageResource(imageId);
-
                     // Setting background
-                    layout = findViewById(R.id.main_background);
-                    layout.setBackgroundResource(backgroundId);
+                    ObjectAnimator bgAnimator = ObjectAnimator.ofFloat(backgroundView, View.ALPHA, 1.0f, 0.0f);
+                    ObjectAnimator fadeInAnim = ObjectAnimator.ofFloat(backgroundView, View.ALPHA, 0.0f, 1.0f);
 
+                    bgAnimator.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(final Animator animation) {
+                            Log.d("layoutAlpha", "onAnimationStart: 1 -> 0");
+                        }
 
-                    saveToPreferences(currentTemp, conditionID, locationCity);
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            backgroundView.setBackgroundResource(backgroundId);
+                            backgroundView.setTag(backgroundId);
+                            temperature.setText(MessageFormat.format("{0}°С", currentTemp));
+                            location.setText(locationCity);
+                            weatherIcon.setImageResource(imageId);
+
+                            Log.d("layoutAlpha", "onAnimationStart: 0 -> 1");
+                            fadeInAnim.start();
+                        }
+                    });
+                    bgAnimator.setDuration(250);
+                    fadeInAnim.setDuration(250);
+
+                    bgAnimator.start();
+
+                    saveToPreferences(currentTemp, conditionID, locationCity, pLong, pLat);
                     Toast.makeText(MainActivity.this, "Weather updated!", Toast.LENGTH_SHORT).show();
 
-                    stopAnimation();
+                    stopLoadingAnimation();
                 }
             }
 
@@ -174,17 +197,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
                 Toast.makeText(getApplicationContext(), "Please connect to the Internet", Toast.LENGTH_SHORT).show();
 
-                stopAnimation();
+                stopLoadingAnimation();
             }
         });
     }
 
-    private void saveToPreferences(int temp, int id, String location) {
+    private void saveToPreferences(int temp, int id, String location, Double pLong, Double pLat) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         editor.putInt("Temps", temp);
         editor.putInt("ConditionID", id);
         editor.putString("Location", location);
+        editor.putString("Longitude", pLong.toString());
+        editor.putString("Latitude", pLat.toString());
 
         editor.apply();
     }
@@ -202,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     }
 
+    @SuppressLint("SimpleDateFormat")
     public void getCurrentDate() {
         SimpleDateFormat mmmm_dd = new SimpleDateFormat("MMMM dd");
         SimpleDateFormat hh_mm = new SimpleDateFormat("K:mma");
@@ -219,10 +245,4 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     }
 
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        pLat = location.getLatitude();
-        pLong = location.getLongitude();
-        Log.d("alo", pLat + " " + pLong);
-    }
 }
